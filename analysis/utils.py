@@ -1,8 +1,6 @@
-from os import name
 import plotly.express as px
 import pandas as pd
 from vaderSentiment.vaderSentiment import  SentimentIntensityAnalyzer
-
 from analysis.models import SentimentAnalysis
 
 def analysis_sentiment(text):

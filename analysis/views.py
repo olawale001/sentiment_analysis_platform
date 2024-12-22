@@ -1,6 +1,9 @@
 import os
 from unittest import result
+from django.http import HttpResponse
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,7 +14,7 @@ from .models import SentimentAnalysis
 
 class SentimentAnalysisView(APIView):
     def post(self, request):
-        file = request.FILE.get("file")
+        file = request.FILES.get("file")
         text = request.data.get("text")
 
         if file:
@@ -39,7 +42,20 @@ class SentimentAnalysisView(APIView):
 
 def index(request):
     return render(request, "index.html")    
-
+@method_decorator(login_required, name='dispatch')
 def dashboard(request):
     chart = generate_sentiment_chart
     return render(request, "dashboard.html", {"chart": chart})
+
+@login_required
+def download_csv(request):
+    results = SentimentAnalysis.objects.all()    
+    response = HttpResponse(content_type='text/csv')
+
+    response['Content-Disposition'] = 'attachment; filename="sentiment_analysis_result.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Text', 'Sentiment', 'Confidence', 'Created_at'])
+    
+    for result in results:
+        writer.writerow([result.text, result.sentiment, result.confidence, result.created_at])        
+    return response    
